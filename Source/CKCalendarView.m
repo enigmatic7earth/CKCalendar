@@ -30,6 +30,7 @@
 #define UIColorFromRGB(rgbValue) [UIColor colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 green:((float)((rgbValue & 0xFF00) >> 8))/255.0 blue:((float)(rgbValue & 0xFF))/255.0 alpha:1.0]
 
 
+
 @class CALayer;
 @class CAGradientLayer;
 
@@ -79,7 +80,7 @@
     _date = date;
     if (date) {
         NSDateComponents *comps = [self.calendar components:NSDayCalendarUnit|NSMonthCalendarUnit fromDate:date];
-        [self setTitle:[NSString stringWithFormat:@"%d", comps.day] forState:UIControlStateNormal];
+        [self setTitle:[NSString stringWithFormat:@"%ld", (long)comps.day] forState:UIControlStateNormal];
     } else {
         [self setTitle:@"" forState:UIControlStateNormal];
     }
@@ -108,6 +109,7 @@
 @property(nonatomic, strong) UILabel *titleLabel;
 @property(nonatomic, strong) UIButton *prevButton;
 @property(nonatomic, strong) UIButton *nextButton;
+@property(nonatomic, strong) UIButton *cancelButton;
 @property(nonatomic, strong) UIView *calendarContainer;
 @property(nonatomic, strong) GradientView *daysHeader;
 @property(nonatomic, strong) NSArray *dayOfWeekLabels;
@@ -164,14 +166,14 @@
     self.titleLabel = titleLabel;
 
     UIButton *prevButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    [prevButton setImage:[UIImage imageNamed:@"left_arrow.png"] forState:UIControlStateNormal];
+    [prevButton setImage:[UIImage imageNamed:@"left_arrow"] forState:UIControlStateNormal];
     prevButton.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleRightMargin;
     [prevButton addTarget:self action:@selector(_moveCalendarToPreviousMonth) forControlEvents:UIControlEventTouchUpInside];
     [self addSubview:prevButton];
     self.prevButton = prevButton;
 
     UIButton *nextButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    [nextButton setImage:[UIImage imageNamed:@"right_arrow.png"] forState:UIControlStateNormal];
+    [nextButton setImage:[UIImage imageNamed:@"right_arrow"] forState:UIControlStateNormal];
     nextButton.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin;
     [nextButton addTarget:self action:@selector(_moveCalendarToNextMonth) forControlEvents:UIControlEventTouchUpInside];
     [self addSubview:nextButton];
@@ -186,6 +188,18 @@
     calendarContainer.clipsToBounds = YES;
     [self addSubview:calendarContainer];
     self.calendarContainer = calendarContainer;
+    
+    //Customization
+    //Adding a cancel button
+    UIButton * cancelButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    [cancelButton addTarget:self action:@selector(_closeCalendar) forControlEvents:UIControlEventTouchUpInside];
+    cancelButton.backgroundColor = [UIColor whiteColor];
+    [cancelButton setTitle:@"Cancel" forState:UIControlStateNormal];
+    [cancelButton setTintColor:[UIColor blackColor]];
+    cancelButton.layer.cornerRadius = 5.0f;
+    cancelButton.clipsToBounds =YES;
+    [self addSubview:cancelButton];
+    self.cancelButton = cancelButton;
 
     GradientView *daysHeader = [[GradientView alloc] initWithFrame:CGRectZero];
     daysHeader.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleWidth;
@@ -255,7 +269,7 @@
     CGFloat containerHeight = (numberOfWeeksToShow * (self.cellWidth + CELL_BORDER_WIDTH) + DAYS_HEADER_HEIGHT);
 
     CGRect newFrame = self.frame;
-    newFrame.size.height = containerHeight + CALENDAR_MARGIN + TOP_HEIGHT;
+    newFrame.size.height = containerHeight + CALENDAR_MARGIN + TOP_HEIGHT+26;
     self.frame = newFrame;
 
     self.highlight.frame = CGRectMake(1, 1, self.bounds.size.width - 2, 1);
@@ -266,6 +280,8 @@
     self.nextButton.frame = CGRectMake(self.bounds.size.width - 48 - BUTTON_MARGIN, BUTTON_MARGIN, 48, 38);
 
     self.calendarContainer.frame = CGRectMake(CALENDAR_MARGIN, CGRectGetMaxY(self.titleLabel.frame), containerWidth, containerHeight);
+    //
+    self.cancelButton.frame =CGRectMake(CALENDAR_MARGIN, self.calendarContainer.frame.size.height+45, containerWidth, 24);
     self.daysHeader.frame = CGRectMake(0, 0, self.calendarContainer.frame.size.width, DAYS_HEADER_HEIGHT);
 
     CGRect lastDayFrame = CGRectZero;
@@ -483,6 +499,12 @@
     [self.delegate calendar:self didSelectDate:date];
     [self setNeedsLayout];
 }
+-(void)_closeCalendar{
+    [self removeFromSuperview];
+    
+    
+}
+
 
 #pragma mark - Theming getters/setters
 
@@ -507,6 +529,7 @@
 
 - (void)setInnerBorderColor:(UIColor *)color {
     self.calendarContainer.layer.borderColor = color.CGColor;
+
 }
 
 - (void)setDayOfWeekFont:(UIFont *)font {
